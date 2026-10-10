@@ -1,5 +1,5 @@
 (function () {
-  const CONTENT_VERSION = '1.1.2';
+  const CONTENT_VERSION = '1.2.0';
   if (window.__JOB_AUTOFILL_MESSAGE_LISTENER__) {
     try { chrome.runtime.onMessage.removeListener(window.__JOB_AUTOFILL_MESSAGE_LISTENER__); } catch (_) {}
   }
@@ -867,6 +867,72 @@
     };
   }
 
+  function diagnosticControlRoot(el) {
+    return el.closest([
+      '.el-select', '.el-cascader', '.el-radio-group', '.el-checkbox-group',
+      '.ant-select', '.ant-cascader', '.ant-cascader-picker', '.ant-radio-group', '.ant-checkbox-group',
+      '.phoenix-select', '[class*="phoenix-select"]', '[role="radiogroup"]', '[role="combobox"]',
+      '.el-form-item', '.ant-form-item', '.form-item', '.form-cell-inner', 'fieldset'
+    ].join(',')) || el;
+  }
+
+  function diagnosticNode(node) {
+    if (!node) return null;
+    const className = String(node.className || '').replace(/\s+/g, ' ').trim().slice(0, 240);
+    const value = 'value' in node ? meaningfulValue(node.value) : '';
+    return {
+      tag: node.tagName?.toLowerCase() || '', type: (node.type || '').toLowerCase(),
+      role: node.getAttribute?.('role') || '', className,
+      id: String(node.id || '').slice(0, 120), name: String(node.name || '').slice(0, 120),
+      placeholder: String(node.placeholder || node.getAttribute?.('data-placeholder') || '').slice(0, 160),
+      checked: Boolean(node.checked), selected: Boolean(node.selected), disabled: Boolean(node.disabled),
+      readOnly: Boolean(node.readOnly || node.getAttribute?.('aria-readonly') === 'true'),
+      ariaChecked: node.getAttribute?.('aria-checked') || '', ariaSelected: node.getAttribute?.('aria-selected') || '',
+      ariaExpanded: node.getAttribute?.('aria-expanded') || '', ariaHaspopup: node.getAttribute?.('aria-haspopup') || '',
+      dataValuePresent: Boolean(node.getAttribute?.('data-value')),
+      dataValueLength: String(node.getAttribute?.('data-value') || '').length,
+      value: (node.type || '').toLowerCase() === 'hidden' ? '' : String(value || '').slice(0, 160),
+      valueLength: String(node.value || '').length,
+      text: String(node.innerText || node.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 240)
+    };
+  }
+
+  function diagnosticSkeleton(root, depth = 0) {
+    if (!root || depth > 2) return null;
+    const item = diagnosticNode(root);
+    item.children = Array.from(root.children || []).slice(0, 12)
+      .map(child => diagnosticSkeleton(child, depth + 1)).filter(Boolean);
+    return item;
+  }
+
+  function controlDiagnostics(profile = {}, educationLevel = 'auto') {
+    return candidates().slice(0, 250).map((el, index) => {
+      const label = nearbyText(el);
+      const match = matchElement(el, label, educationLevel);
+      const expectedValue = match ? profileValue(profile, match.path) : undefined;
+      const root = diagnosticControlRoot(el);
+      const selectedSelector = [
+        'input:checked', 'option:checked', '[aria-checked="true"]', '[aria-selected="true"]',
+        '.is-checked', '.is-selected', '.ant-radio-wrapper-checked', '.ant-checkbox-wrapper-checked',
+        '[class*="radio"][class*="checked"]', '[class*="selected-value"]', '[class*="selection-item"]'
+      ].join(',');
+      const selectedNodes = Array.from(root.querySelectorAll?.(selectedSelector) || []).slice(0, 20).map(diagnosticNode);
+      const ancestors = [];
+      let cursor = el;
+      for (let depth = 0; cursor && depth < 5 && cursor !== document.body; depth++, cursor = cursor.parentElement) {
+        ancestors.push(diagnosticNode(cursor));
+      }
+      const currentValue = existingFieldValue(el, expectedValue);
+      return {
+        index, label, path: match?.path || '', confidence: match?.confidence || 0,
+        expectedValue: expectedValue == null ? '' : String(expectedValue).slice(0, 160),
+        currentValue: String(currentValue || '').slice(0, 160),
+        decision: currentValue ? 'preserve-existing' : 'consider-empty',
+        element: diagnosticNode(el), root: diagnosticNode(root), ancestors,
+        selectedNodes, skeleton: diagnosticSkeleton(root)
+      };
+    });
+  }
   function uiDiagnostics() {
     const rows = [];
     for (const node of Array.from(document.body?.querySelectorAll('*') || [])) {
@@ -1085,7 +1151,7 @@
   const messageListener = (message, sender, sendResponse) => {
     if (message.type === 'PING') sendResponse({ ready: true, version: CONTENT_VERSION, url: location.href, frame: window === window.top ? 'top' : 'child' });
     if (message.type === 'SCAN') sendResponse({ fields: scan(message.profile || {}, message.educationLevel), pageState: pageState() });
-    if (message.type === 'DIAGNOSE_UI') sendResponse({ nodes: uiDiagnostics(), pageState: pageState(), bridgeDebug });
+    if (message.type === 'DIAGNOSE_UI') sendResponse({ nodes: uiDiagnostics(), controls: controlDiagnostics(message.profile || {}, message.educationLevel), pageState: pageState(), bridgeDebug });
     if (message.type === 'PREPARE_REPEAT_GROUPS') {
       prepareRepeatGroups(message.targets || {}).then(sendResponse);
       return true;

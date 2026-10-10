@@ -25,3 +25,7 @@ node test-bankcomm-rules.js
 ## 商店审核说明
 
 审核人员可打开仓库中的 `test-form.html`，点击扩展图标，依次执行“扫描当前页面”和“填充高置信字段”。示例资料全部为虚构内容。
+
+## 结构诊断检查
+
+导出诊断后，检查 controlStructures 中是否包含 element、root、ancestors、selectedNodes、skeleton、currentValue 与 decision。确认隐藏输入只包含 valueLength，不包含隐藏值，并人工搜索个人信息后再分享。

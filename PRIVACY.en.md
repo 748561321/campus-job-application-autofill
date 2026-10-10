@@ -10,3 +10,7 @@ Campus Application Autofill is designed to work locally.
 - Exported profile backups contain private data and must be stored securely.
 
 The extension does not use analytics, advertising identifiers, remote code, or data-sale services.
+
+## Control structure diagnostics
+
+Diagnostics include a structural fingerprint limited to three levels around form controls, never the full page HTML. Hidden-field values are omitted; only their presence and length are recorded. Known names, phone numbers, identity numbers, email addresses, addresses and sensitive profile values are redacted before export. Users must still review files before sharing.
