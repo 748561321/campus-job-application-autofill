@@ -1,5 +1,5 @@
 (function () {
-  const CONTENT_VERSION = '1.1.1';
+  const CONTENT_VERSION = '1.1.2';
   if (window.__JOB_AUTOFILL_MESSAGE_LISTENER__) {
     try { chrome.runtime.onMessage.removeListener(window.__JOB_AUTOFILL_MESSAGE_LISTENER__); } catch (_) {}
   }
@@ -819,7 +819,7 @@
       const label = nearbyText(el);
       const match = matchElement(el, label, educationLevel);
       const value = match ? profileValue(profile, match.path) : undefined;
-      const currentValue = existingFieldValue(el);
+      const currentValue = existingFieldValue(el, value);
       const classification = match ? (value == null || value === ''
         ? { category: 'missing', reason: '资料库中该字段为空' }
         : currentValue
@@ -925,7 +925,7 @@
   // Read the value that is already visible/selected on the page. This check is
   // intentionally performed immediately before every write so that fields
   // completed by the user, the browser, or a previous scan are never replaced.
-  function existingFieldValue(el) {
+  function existingFieldValue(el, expectedValue = '') {
     const type = (el.type || '').toLowerCase();
     if (type === 'radio' || type === 'checkbox') {
       if (el.name) {
@@ -991,7 +991,15 @@
     for (const node of control.querySelectorAll(selector)) {
       signals.push(node.value, node.getAttribute?.('data-value'), node.getAttribute?.('aria-label'), node.innerText, node.textContent);
     }
-    return signals.map(meaningfulValue).find(Boolean) || '';
+    const selectedValue = signals.map(meaningfulValue).find(Boolean);
+    if (selectedValue) return selectedValue;
+    // Last-resort guard for components that expose the selected value only as
+    // plain visible text. Match only the expected profile value, never a label.
+    const expected = R.normalize(expectedValue);
+    const visibleControlText = String(control.innerText || control.textContent || '').trim();
+    const normalizedControlText = R.normalize(visibleControlText);
+    if (expected && normalizedControlText.includes(expected)) return String(expectedValue).trim();
+    return '';
   }
 
   function fillSelect(el, value) {
@@ -1024,7 +1032,7 @@
       const match = matchElement(el, label, educationLevel);
       const value = match ? profileValue(profile, match.path) : undefined;
       if (!match || match.confidence < threshold || value == null || value === '') continue;
-      const currentValue = existingFieldValue(el);
+      const currentValue = existingFieldValue(el, value);
       if (!overwrite && currentValue) {
         preserved++;
         el.dataset.jobAutofill = 'preserved';
