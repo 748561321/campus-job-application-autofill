@@ -4,6 +4,10 @@
 
 一个隐私优先的 Chrome / Edge 校招网申自动填写扩展（job application autofill / resume form filler）。支持识别中英文招聘表单、管理本地求职资料、预览字段匹配，并在用户确认后填写高置信字段。它不会自动提交申请、处理验证码、代答测评或上传附件。
 
+## 搜索关键词
+
+校招、校园招聘、网申助手、简历自动填写、招聘表单、Chrome 扩展、Edge 扩展、campus recruitment、job application autofill、resume form filler。
+
 ## 隐私设计
 
 - 只有点击“扫描当前页面”后才临时访问当前标签页。
