@@ -1,5 +1,5 @@
 (function () {
-  const CONTENT_VERSION = '1.0.0';
+  const CONTENT_VERSION = '1.1.0';
   if (window.__JOB_AUTOFILL_MESSAGE_LISTENER__) {
     try { chrome.runtime.onMessage.removeListener(window.__JOB_AUTOFILL_MESSAGE_LISTENER__); } catch (_) {}
   }
@@ -270,6 +270,27 @@
     }
     return null;
   }
+  function englishRepeatContextMatch(el, fullLabel = '') {
+    const local = R.normalize(`${ownText(el)} | ${String(fullLabel).split('|').slice(0, 2).join('|')}`);
+    const card = el.closest('[data-project-index], [class*="project-item"], [class*="projectItem"], .form-part-body, fieldset, [class*="repeat-card"]');
+    if (!card) return null;
+    const text = String(card.innerText || card.textContent || '').toLowerCase();
+    if (!/(project name|project title)/.test(text) || !/(project description|project summary|responsibilities|technology stack)/.test(text)) return null;
+    const cards = Array.from(document.querySelectorAll('[data-project-index], [class*="project-item"], [class*="projectItem"], .form-part-body, fieldset, [class*="repeat-card"]'))
+      .filter(node => /(project name|project title)/i.test(node.innerText || '') && /(project description|project summary|responsibilities|technology stack)/i.test(node.innerText || ''));
+    const explicitIndex = Number(card.getAttribute('data-project-index'));
+    const index = Number.isFinite(explicitIndex) && explicitIndex >= 0 ? explicitIndex : Math.max(0, cards.indexOf(card));
+    const fields = [
+      [/projectname|projecttitle/, 'name'], [/projectrole|roleintheproject/, 'role'],
+      [/projectstartdate|startdate/, 'startDate'], [/projectenddate|enddate/, 'endDate'],
+      [/technologystack|technologies|toolsused/, 'technologies'],
+      [/projectdescription|projectsummary/, 'description'],
+      [/projectoutcome|projectresult|achievement/, 'achievement'],
+      [/responsibilities|personalresponsibility/, 'responsibility']
+    ];
+    const hit = fields.find(([pattern]) => pattern.test(local));
+    return hit ? { path: `projects.${index}.${hit[1]}`, confidence: 1, alias: hit[0].source } : { blocked: true };
+  }
   function matchElement(el, fullLabel, educationLevel = 'auto') {
     const adaptVariant = match => {
       if (!match) return match;
@@ -293,6 +314,9 @@
     const family = familyContextMatch(el, fullLabel);
     if (family?.blocked) return null;
     if (family) return family;
+    const englishRepeat = englishRepeatContextMatch(el, fullLabel);
+    if (englishRepeat?.blocked) return null;
+    if (englishRepeat) return englishRepeat;
     if (R.shouldNeverAutofill(type, fieldText)) return null;
     const structured = zhiyeStructuredMatch(el, educationLevel);
     if (structured) return adaptVariant(structured);
@@ -317,7 +341,7 @@
     const section = el.closest('.form-cell, section, fieldset, [class*="section"], [class*="module"]');
     const sectionTitle = section?.querySelector('.tit, legend, [class*="section-title"], [class*="module-title"]')?.innerText || '';
     const context = `${ownText(el)} | ${fullLabel} | ${sectionTitle} | ${elementContext(el)}`;
-    if (!/父亲|母亲|父母|家庭成员|家庭关系|社会关系|家属|亲属/.test(context)) return null;
+    if (!/父亲|母亲|父母|家庭成员|家庭关系|社会关系|家属|亲属|father|mother|parents?|family members?|family relations?|relatives?/i.test(context)) return null;
     let member = '';
     const localContext = `${ownText(el)} | ${String(fullLabel).split('|').slice(0, 2).join('|')}`;
     const chooseMember = text => {
@@ -781,7 +805,15 @@
   }
 
   function scan(profile, educationLevel) {
-    const elements = candidates();
+    const rawElements = candidates();
+    const seenControls = new Set();
+    const elements = rawElements.filter(el => {
+      if (['radio', 'checkbox'].includes((el.type || '').toLowerCase())) return true;
+      const control = el.closest('.el-select, .el-cascader, .ant-select, .ant-cascader, .ant-cascader-picker, .ant-picker, .phoenix-select, [class*="phoenix-select"], [role="combobox"]') || el;
+      if (seenControls.has(control)) return false;
+      seenControls.add(control);
+      return true;
+    });
 
     return elements.map((el, index) => {
       const label = nearbyText(el);
@@ -886,7 +918,7 @@
   function meaningfulValue(value) {
     const text = String(value == null ? '' : value).trim();
     if (!text) return '';
-    if (/^(?:--|-|请选择|请选择.*|请填写|请填写.*|请输入|请输入.*|暂无|无)$/i.test(text)) return '';
+    if (/^(?:--|-|请选择|请选择.*|请填写|请填写.*|请输入|请输入.*|暂无|无|select|please select.*|choose|please choose.*|enter|please enter.*|not selected|none)$/i.test(text)) return '';
     return text;
   }
 
@@ -915,15 +947,28 @@
 
     const control = el.closest([
       '.el-select', '.el-cascader', '.el-date-editor', '.ant-select', '.ant-cascader', '.ant-cascader-picker', '.ant-picker', '.phoenix-select',
-      '[class*="phoenix-select"]', '[role="combobox"]'
+      '[class*="phoenix-select"]', '[class*="select-container"]', '[class*="dropdown"]', '[role="combobox"]'
     ].join(','));
     if (!control) return '';
-    const selected = control.querySelector([
-      '.el-input__inner', '.el-select__selected-item', '.el-cascader__label', '.ant-select-selection-item', '.ant-picker-input input',
-      '.el-select__tags-text', '.ant-select-selection-selected-value', '.ant-cascader-picker-label', '.phoenix-select__selection-item',
-      '[class*="selected-value"]', '[class*="selection-item"]'
-    ].join(','));
-    return meaningfulValue(selected?.value || selected?.innerText || selected?.textContent);
+
+    // Component libraries often keep the real value in a hidden model input and
+    // render the selected label in another node. Inspect every reliable signal;
+    // never rely on the first matching node, which may still be an empty search box.
+    const signals = [
+      control.getAttribute('data-value'), control.getAttribute('data-selected-value'),
+      control.getAttribute('aria-valuetext'), control.getAttribute('aria-valuenow')
+    ];
+    const selector = [
+      '.el-select__selected-item', '.el-cascader__label', '.ant-select-selection-item',
+      '.el-select__tags-text', '.ant-select-selection-selected-value', '.ant-cascader-picker-label',
+      '.phoenix-select__selection-item', '[class*="selected-value"]', '[class*="selection-item"]',
+      '[class*="selected-label"]', '[data-selected="true"]', '[aria-selected="true"]',
+      'input[type="hidden"]', '.ant-picker-input input', '.el-input__inner'
+    ].join(',');
+    for (const node of control.querySelectorAll(selector)) {
+      signals.push(node.value, node.getAttribute?.('data-value'), node.getAttribute?.('aria-label'), node.innerText, node.textContent);
+    }
+    return signals.map(meaningfulValue).find(Boolean) || '';
   }
 
   function fillSelect(el, value) {
@@ -940,7 +985,15 @@
   }
 
   async function fill(profile, threshold, educationLevel, overwrite = false) {
-    const elements = candidates();
+    const rawElements = candidates();
+    const seenControls = new Set();
+    const elements = rawElements.filter(el => {
+      if (['radio', 'checkbox'].includes((el.type || '').toLowerCase())) return true;
+      const control = el.closest('.el-select, .el-cascader, .ant-select, .ant-cascader, .ant-cascader-picker, .ant-picker, .phoenix-select, [class*="phoenix-select"], [role="combobox"]') || el;
+      if (seenControls.has(control)) return false;
+      seenControls.add(control);
+      return true;
+    });
     let filled = 0, skipped = 0, preserved = 0;
     const details = [];
     for (const el of elements) {
@@ -1014,6 +1067,3 @@
   window.__JOB_AUTOFILL_MESSAGE_LISTENER__ = messageListener;
   chrome.runtime.onMessage.addListener(messageListener);
 })();
-
-
-

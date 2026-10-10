@@ -1,5 +1,5 @@
 (function () {
-  const BRIDGE_VERSION = '1.0.0';
+  const BRIDGE_VERSION = '1.1.0';
   if (window.__JOB_AUTOFILL_PAGE_BRIDGE_HANDLER__) {
     document.removeEventListener('job-autofill-select-request', window.__JOB_AUTOFILL_PAGE_BRIDGE_HANDLER__);
   }
@@ -108,4 +108,3 @@
   window.__JOB_AUTOFILL_PAGE_BRIDGE_HANDLER__ = bridgeHandler;
   document.addEventListener('job-autofill-select-request', bridgeHandler);
 })();
-

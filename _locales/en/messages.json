@@ -1,0 +1,4 @@
+{
+  "extensionName": {"message": "Campus Application Autofill"},
+  "extensionDescription": {"message": "Recognizes Chinese and English application fields only after a user action, fills from a local profile, and never submits forms automatically."}
+}

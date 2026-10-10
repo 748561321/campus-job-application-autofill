@@ -74,7 +74,55 @@
     ,['intention.careerPlan', ['职业规划', '个人职业规划']]
     ,['unconfirmed.hobbies', ['个人爱好', '兴趣爱好', '爱好特长']]
     ,['thesis.introduction', ['毕业论文简介', '论文简介', '毕业设计简介']]
-  ];
+    ,['personal.nationality', ['nationality', 'citizenship']]
+    ,['personal.ethnicity', ['ethnicity', 'ethnic group']]
+    ,['personal.health', ['health status', 'health condition']]
+    ,['personal.maritalStatus', ['marital status']]
+    ,['personal.height', ['height', 'height cm']]
+    ,['personal.weight', ['weight', 'weight kg']]
+    ,['personal.idType', ['id type', 'identity document type', 'document type']]
+    ,['personal.idNumber', ['id number', 'identity number', 'national id']]
+    ,['personal.address', ['mailing address', 'correspondence address', 'residential address', 'current address']]
+    ,['personal.birthPlace', ['place of birth', 'birthplace']]
+    ,['personal.nativePlace', ['native place', 'hometown']]
+    ,['personal.household', ['registered residence', 'household registration']]
+    ,['personal.currentCity', ['current city', 'city of residence', 'current residence']]
+    ,['personal.isOverseasStudent', ['international student', 'overseas student']]
+    ,['education.master.school', ['university', 'school name', 'institution', 'institution name', 'graduation school']]
+    ,['education.master.college', ['college', 'faculty', 'academic department']]
+    ,['education.master.major', ['major', 'field of study', 'programme', 'study program']]
+    ,['education.master.degree', ['education level', 'highest education', 'qualification']]
+    ,['education.master.academicDegree', ['academic degree', 'degree type']]
+    ,['education.master.educationType', ['education type', 'study mode']]
+    ,['education.master.fullTime', ['full time', 'full-time']]
+    ,['education.master.duration', ['program duration', 'programme duration', 'study duration']]
+    ,['education.master.startDate', ['enrollment date', 'education start date', 'study start date']]
+    ,['education.master.endDate', ['graduation date', 'expected graduation date', 'education end date']]
+    ,['education.master.gpa', ['grade point average']]
+    ,['education.master.rank', ['class rank', 'academic rank']]
+    ,['education.master.rankTotal', ['class size', 'total students']]
+    ,['education.master.rankPercent', ['rank percentage', 'top percentage']]
+    ,['education.master.researchDirection', ['research direction', 'research area', 'research focus']]
+    ,['education.master.courses', ['major courses', 'relevant coursework', 'main courses']]
+    ,['language.name', ['foreign language', 'language name']]
+    ,['language.certificate', ['language certificate', 'english certificate', 'language qualification']]
+    ,['language.cet6', ['cet-6 score', 'cet6 score', 'language test score']]
+    ,['experience.company', ['employer', 'company name', 'organization name']]
+    ,['experience.industry', ['industry', 'business sector']]
+    ,['experience.department', ['work department', 'team name']]
+    ,['experience.position', ['job title', 'position title', 'role title']]
+    ,['experience.workType', ['employment type', 'work type']]
+    ,['experience.startDate', ['employment start date', 'internship start date', 'work start date']]
+    ,['experience.endDate', ['employment end date', 'internship end date', 'work end date']]
+    ,['experience.description200', ['job description', 'responsibilities', 'main duties']]
+    ,['experience.achievement', ['work achievements', 'accomplishments']]
+    ,['skills.short', ['technical skills', 'professional skills', 'skill summary']]
+    ,['selfEvaluation.default', ['self evaluation', 'personal statement', 'professional summary', 'profile summary']]
+    ,['intention.position', ['desired position', 'target position', 'job preference']]
+    ,['intention.city', ['preferred location', 'desired location', 'work location']]
+    ,['intention.careerPlan', ['career plan', 'career goals']]
+    ,['unconfirmed.hobbies', ['hobbies', 'interests']]
+    ,['thesis.introduction', ['thesis summary', 'dissertation summary', 'final project summary']]  ];
 
   const protectedKeys = new Set([
     'salary', 'transfer', 'relative', 'health', 'discipline', 'submit'
@@ -90,7 +138,7 @@
 
   function shouldNeverAutofill(type, fieldText) {
     const text = String(fieldText || '');
-    if (/紧急联系人|紧急联系电话|亲属|家庭成员|家属|招聘信息来源|招聘渠道|infoSourceName|薪资|薪酬|年薪|月薪/i.test(text)) return true;
+    if (/紧急联系人|紧急联系电话|亲属|家庭成员|家属|emergency contact|family member|relative|招聘信息来源|招聘渠道|infoSourceName|薪资|薪酬|年薪|月薪|salary|compensation/i.test(text)) return true;
     if (['radio', 'checkbox'].includes(String(type || '').toLowerCase()) &&
         /服从|调剂|承诺|保证|声明|隐私|协议|授权|申报专项|愿意申报|是否愿意/i.test(text)) return true;
     return false;
@@ -144,5 +192,3 @@
 
   window.JobAutofillRules = { rules, protectedKeys, normalize, getByPath, matchField, shouldNeverAutofill, classifyUnmatchedField };
 })();
-
-
