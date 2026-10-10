@@ -1,0 +1,10 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="styles.css"><title>校招网申助手</title></head>
+<body class="popup"><header><h1>校招网申助手</h1><span class="safe">本地处理 · 不自动提交</span></header>
+<section id="status" class="notice">请打开招聘表单，然后点击“扫描当前页面”。插件不会在后台读取网页。</section>
+<label class="mode-row"><span>当前教育阶段</span><select id="educationLevel"><option value="auto">自动识别</option><option value="master">硕士</option><option value="bachelor">本科</option><option value="highSchool">高中</option></select></label>
+<label class="mode-row"><span>已有内容保护</span><span><input id="overwriteExisting" type="checkbox"> 覆盖已有内容</span></label>
+<div class="actions"><button id="scan" class="secondary">扫描当前页面</button><button id="fill" class="primary" disabled>填充高置信字段</button></div>
+<details class="repeat-panel"><summary>重复经历数量</summary><div class="repeat-grid"><label>教育 <input id="educationCount" type="number" min="0" max="3" value="2"></label><label>项目 <input id="projectCount" type="number" min="0" max="8" value="3"></label><label>获奖 <input id="awardCount" type="number" min="0" max="8" value="3"></label></div><button id="prepareGroups" class="secondary full" disabled>补齐经历卡片</button><small>只点击对应的“添加”，不会删除内容或提交申请。</small></details>
+<section><div class="summary"><strong id="matched">0</strong> 个可填写，<strong id="existing">0</strong> 个已有内容，<strong id="manual">0</strong> 个需确认，<strong id="noValue">0</strong> 个资料缺失，<strong id="unknown">0</strong> 个未识别</div><div id="fields" class="fields"><div class="empty">尚未扫描。</div></div></section>
+<details><summary>查看需人工确认和资料缺失字段</summary><div id="manualFields" class="fields unknownFields"></div></details><details><summary>查看未识别字段</summary><div id="unknownFields" class="fields unknownFields"></div></details>
+<button id="diagnostics" class="secondary full" disabled>导出脱敏诊断JSON</button><footer><button id="options" class="link">管理本地资料</button></footer><script src="popup.js"></script></body></html>
