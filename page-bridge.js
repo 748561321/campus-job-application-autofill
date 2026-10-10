@@ -1,5 +1,5 @@
 (function () {
-  const BRIDGE_VERSION = '1.2.0';
+  const BRIDGE_VERSION = '1.2.1';
   if (window.__JOB_AUTOFILL_PAGE_BRIDGE_HANDLER__) {
     document.removeEventListener('job-autofill-select-request', window.__JOB_AUTOFILL_PAGE_BRIDGE_HANDLER__);
   }

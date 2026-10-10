@@ -1,5 +1,5 @@
 (function () {
-  const CONTENT_VERSION = '1.2.0';
+  const CONTENT_VERSION = '1.2.1';
   if (window.__JOB_AUTOFILL_MESSAGE_LISTENER__) {
     try { chrome.runtime.onMessage.removeListener(window.__JOB_AUTOFILL_MESSAGE_LISTENER__); } catch (_) {}
   }
@@ -868,10 +868,14 @@
   }
 
   function diagnosticControlRoot(el) {
-    return el.closest([
+    const componentRoot = el.parentElement?.closest([
       '.el-select', '.el-cascader', '.el-radio-group', '.el-checkbox-group',
       '.ant-select', '.ant-cascader', '.ant-cascader-picker', '.ant-radio-group', '.ant-checkbox-group',
-      '.phoenix-select', '[class*="phoenix-select"]', '[role="radiogroup"]', '[role="combobox"]',
+      '.phoenix-select', '[class*="phoenix-select"]', '[role="radiogroup"]',
+      '[class*="select-container"]', '[class*="dropdown"]'
+    ].join(','));
+    if (componentRoot) return componentRoot;
+    return el.closest([
       '.el-form-item', '.ant-form-item', '.form-item', '.form-cell-inner', 'fieldset'
     ].join(',')) || el;
   }
@@ -1034,9 +1038,13 @@
     const direct = meaningfulValue(el.value);
     if (direct) return direct;
 
-    const control = el.closest([
+    // Search from the parent first. A native/search input often carries
+    // role="combobox" itself, while the selected label lives in its wrapper.
+    // Calling closest() with both selectors would therefore stop at the empty
+    // input and miss the already selected value rendered by Element Plus.
+    const control = el.parentElement?.closest([
       '.el-select', '.el-cascader', '.el-date-editor', '.ant-select', '.ant-cascader', '.ant-cascader-picker', '.ant-picker', '.phoenix-select',
-      '[class*="phoenix-select"]', '[class*="select-container"]', '[class*="dropdown"]', '[role="combobox"]'
+      '[class*="phoenix-select"]', '[class*="select-container"]', '[class*="dropdown"]'
     ].join(','));
     if (!control) return '';
 
