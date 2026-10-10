@@ -1,5 +1,5 @@
 (function () {
-  const CONTENT_VERSION = '1.1.0';
+  const CONTENT_VERSION = '1.1.1';
   if (window.__JOB_AUTOFILL_MESSAGE_LISTENER__) {
     try { chrome.runtime.onMessage.removeListener(window.__JOB_AUTOFILL_MESSAGE_LISTENER__); } catch (_) {}
   }
@@ -932,9 +932,32 @@
         const root = el.form || el.getRootNode?.() || document;
         const escaped = window.CSS?.escape ? CSS.escape(el.name) : el.name.replace(/["\\]/g, '\\$&');
         const checked = root.querySelector?.(`input[name="${escaped}"]:checked`);
-        if (checked) return meaningfulValue(checked.value || checked.getAttribute('aria-label') || '已选择');
+        if (checked) return meaningfulValue(checked.value || checked.getAttribute('aria-label') || checked.closest('label')?.innerText || '已选择');
       }
-      return el.checked ? meaningfulValue(el.value || el.getAttribute('aria-label') || '已选择') : '';
+      if (el.checked || el.getAttribute('aria-checked') === 'true') {
+        return meaningfulValue(el.value || el.getAttribute('aria-label') || el.closest('label')?.innerText || '已选择');
+      }
+      // Many React/Vue radio groups keep selection only on a wrapper class or
+      // aria-checked node, and some sites omit the native input name entirely.
+      const group = el.closest([
+        '[role="radiogroup"]', '.el-radio-group', '.ant-radio-group', '.van-radio-group',
+        '[class*="radio-group"]', '[class*="radioGroup"]', '[class*="checkbox-group"]',
+        'fieldset', '.form-item', '.form-cell-inner'
+      ].join(','));
+      if (group) {
+        const selected = group.querySelector([
+          'input[type="radio"]:checked', 'input[type="checkbox"]:checked',
+          '[role="radio"][aria-checked="true"]', '[role="checkbox"][aria-checked="true"]',
+          '.el-radio.is-checked', '.el-checkbox.is-checked', '.ant-radio-wrapper-checked',
+          '.ant-checkbox-wrapper-checked', '.van-radio[aria-checked="true"]',
+          '[class*="radio"][class*="checked"]', '[class*="checkbox"][class*="checked"]'
+        ].join(','));
+        if (selected) {
+          const selectedInput = selected.matches('input') ? selected : selected.querySelector('input');
+          return meaningfulValue(selectedInput?.value || selected.getAttribute('data-value') || selected.getAttribute('aria-label') || selected.innerText || selected.textContent || '已选择');
+        }
+      }
+      return '';
     }
     if (el.tagName === 'SELECT') {
       const option = el.selectedOptions?.[0];
