@@ -4,7 +4,7 @@ const required=['manifest.json','popup.html','popup.js','options.html','options.
 const failures=[];
 for(const file of required)if(!fs.existsSync(path.join(root,file)))failures.push(`缺少文件: ${file}`);
 const manifest=JSON.parse(fs.readFileSync(path.join(root,'manifest.json'),'utf8').replace(/^\uFEFF/,''));
-if(manifest.version!=='1.2.1')failures.push('公开版版本必须为1.2.1');
+if(manifest.version!=='1.2.2')failures.push('公开版版本必须为1.2.2');
 if(manifest.default_locale!=='zh_CN')failures.push('缺少默认语言设置');
 if(manifest.manifest_version!==3)failures.push('必须使用Manifest V3');
 if(manifest.host_permissions?.length)failures.push('公开版不应声明常驻host_permissions');

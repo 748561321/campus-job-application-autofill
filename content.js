@@ -1,5 +1,5 @@
 (function () {
-  const CONTENT_VERSION = '1.2.1';
+  const CONTENT_VERSION = '1.2.2';
   if (window.__JOB_AUTOFILL_MESSAGE_LISTENER__) {
     try { chrome.runtime.onMessage.removeListener(window.__JOB_AUTOFILL_MESSAGE_LISTENER__); } catch (_) {}
   }
@@ -145,6 +145,49 @@
     return null;
   }
 
+  function chngStructuredMatch(el, fullLabel = '', educationLevel = 'auto') {
+    if (location.host !== 'zhaopin.chng.com.cn') return null;
+    const local = R.normalize(String(fullLabel || '').split('|').slice(0, 3).join('|'));
+    const pageContext = R.normalize(String(fullLabel || ''));
+    let level = educationLevel === 'auto' ? 'master' : educationLevel;
+    if (/本科|学士/.test(pageContext)) level = 'bachelor';
+    else if (/高中|中学/.test(pageContext)) level = 'highSchool';
+    else if (/硕士|研究生/.test(pageContext)) level = 'master';
+
+    if (/专业/.test(local) && !/专业排名/.test(local)) {
+      return { path: `education.${level}.major`, confidence: 1, alias: '专业' };
+    }
+    if (/学习阶段/.test(local)) return { path: `education.${level}.degree`, confidence: 1, alias: '学习阶段' };
+    if (/学位/.test(local)) return { path: `education.${level}.degreeName`, confidence: 1, alias: '学位' };
+    if (/所学主要课程|主要课程/.test(local)) return { path: `education.${level}.courses`, confidence: 1, alias: '所学主要课程' };
+    if (/外语水平/.test(local)) return { path: 'language.level', confidence: 1, alias: '外语水平' };
+    if (/cet4分数/.test(local)) return { path: 'language.cet4', confidence: 1, alias: 'CET-4分数' };
+    if (/其他等级分数/.test(local)) return { path: 'language.otherScore', confidence: 1, alias: '其他等级分数' };
+    if (/雅思成绩|其他等级.*说明/.test(local)) return { path: 'language.description', confidence: 1, alias: '外语说明' };
+    if (/计算机水平/.test(local)) return { path: 'skills.computerLevel', confidence: 1, alias: '计算机水平' };
+    if (/其他技能/.test(local)) return { path: 'skills.short', confidence: 1, alias: '其他技能' };
+    if (/兴趣爱好|特长/.test(local)) return { path: 'unconfirmed.hobbies', confidence: 1, alias: '兴趣爱好/特长' };
+    if (/机构名称/.test(local)) return { path: 'experience.company', confidence: 1, alias: '机构名称' };
+    if (/聘用方式/.test(local)) return { path: 'experience.workType', confidence: 1, alias: '聘用方式' };
+
+    const awardFields = [
+      [/获奖时间/, 'date'], [/获奖名称/, 'name'], [/获奖性质/, 'level'],
+      [/颁奖单位/, 'organization'], [/奖项描述/, 'reason']
+    ];
+    const awardField = awardFields.find(([pattern]) => pattern.test(local));
+    if (awardField) {
+      const [pattern, suffix] = awardField;
+      const peers = candidates().filter(node => {
+        const peerLabel = R.normalize(nearbyText(node).split('|').slice(0, 3).join('|'));
+        return pattern.test(peerLabel);
+      });
+      const index = peers.indexOf(el);
+      return index >= 0
+        ? { path: `awardDetails.${index}.${suffix}`, confidence: 1, alias: awardField[0].source }
+        : { blocked: true };
+    }
+    return null;
+  }
   function cmbStructuredMatch(el, fullLabel = '') {
     if (location.host !== 'career.cmbchina.com') return null;
     const id = String(el.id || '');
@@ -263,7 +306,8 @@
         [/关系|称谓|与本人关系/, 'relation'], [/姓名/, 'name'],
         [/工作单位|单位名称|任职单位|所在单位/, 'company'],
         [/职位|职务|岗位/, 'position'], [/联系电话|移动电话|手机号码|手机号|电话/, 'phone'],
-        [/出生日期|出生年月|生日/, 'birthDate']
+        [/出生日期|出生年月|生日/, 'birthDate'],
+      [/是否在华能系统从业/, 'worksInSystem'], [/工号/, 'employeeId'], [/状态/, 'status']
       ];
       const hit = fields.find(([pattern]) => pattern.test(local));
       return hit ? { path: `familyMembers.${index}.${hit[1]}`, confidence: 1, alias: hit[0].source } : { blocked: true };
@@ -314,6 +358,9 @@
     const family = familyContextMatch(el, fullLabel);
     if (family?.blocked) return null;
     if (family) return family;
+    const chng = chngStructuredMatch(el, fullLabel, educationLevel);
+    if (chng?.blocked) return null;
+    if (chng) return adaptVariant(chng);
     const englishRepeat = englishRepeatContextMatch(el, fullLabel);
     if (englishRepeat?.blocked) return null;
     if (englishRepeat) return englishRepeat;
@@ -341,7 +388,7 @@
     const section = el.closest('.form-cell, section, fieldset, [class*="section"], [class*="module"]');
     const sectionTitle = section?.querySelector('.tit, legend, [class*="section-title"], [class*="module-title"]')?.innerText || '';
     const context = `${ownText(el)} | ${fullLabel} | ${sectionTitle} | ${elementContext(el)}`;
-    if (!/父亲|母亲|父母|家庭成员|家庭关系|社会关系|家属|亲属|father|mother|parents?|family members?|family relations?|relatives?/i.test(context)) return null;
+    if (!/父亲|母亲|父母|家庭成员|家庭关系|社会关系|家属|亲属|与本人关系|father|mother|parents?|family members?|family relations?|relatives?/i.test(context)) return null;
     let member = '';
     const localContext = `${ownText(el)} | ${String(fullLabel).split('|').slice(0, 2).join('|')}`;
     const chooseMember = text => {
@@ -365,13 +412,27 @@
       const index = card ? cards.indexOf(card) : -1;
       member = ['father', 'mother'][index] || '';
     }
+    if (!member) {
+      // Generic repeated cards may not expose family-specific class names. Use
+      // relationship controls as row anchors and follow DOM reading order.
+      const relationshipControls = candidates().filter(node => {
+        const label = `${ownText(node)} | ${nearbyText(node).split('|').slice(0, 2).join('|')}`;
+        return /与本人关系|家庭关系|成员关系|relationship to applicant|relationship/i.test(label);
+      });
+      const precedingAnchors = relationshipControls.filter(node =>
+        node === el || Boolean(node.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)
+      );
+      const index = precedingAnchors.length - 1;
+      member = ['father', 'mother'][index] || '';
+    }
     if (!member) return { blocked: true };
     const text = R.normalize(`${ownText(el)} | ${String(fullLabel).split('|').slice(0, 2).join('|')}`);
     const fields = [
       [/关系|称谓|与本人关系/, 'relation'], [/姓名/, 'name'],
       [/工作单位|单位名称|任职单位|所在单位|公司名称/, 'company'],
       [/职位|职务|岗位/, 'position'], [/手机号码|手机号|联系电话|电话/, 'phone'],
-      [/出生日期|出生年月|生日/, 'birthDate']
+      [/出生日期|出生年月|生日/, 'birthDate'],
+      [/是否在华能系统从业/, 'worksInSystem'], [/工号/, 'employeeId'], [/状态/, 'status']
     ];
     const hit = fields.find(([pattern]) => pattern.test(text));
     return hit ? { path: `family.${member}.${hit[1]}`, confidence: 1, alias: hit[0].source } : { blocked: true };
@@ -820,11 +881,13 @@
       const match = matchElement(el, label, educationLevel);
       const value = match ? profileValue(profile, match.path) : undefined;
       const currentValue = existingFieldValue(el, value);
-      const classification = match ? (value == null || value === ''
-        ? { category: 'missing', reason: '资料库中该字段为空' }
-        : currentValue
-          ? { category: 'existing', reason: '页面中已有内容，默认不会覆盖' }
-          : { category: 'matched', reason: '' }) : R.classifyUnmatchedField(el.type, label);
+      const classification = currentValue
+        ? { category: 'existing', reason: match ? '页面中已有内容，默认不会覆盖' : '页面中已有内容，无需自动填写' }
+        : match
+          ? (value == null || value === ''
+            ? { category: 'missing', reason: '资料库中该字段为空' }
+            : { category: 'matched', reason: '' })
+          : R.classifyUnmatchedField(el.type, label);
       return {
         index,
         label,

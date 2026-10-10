@@ -6,6 +6,8 @@
     ['personal.ethnicity', ['民族']],
     ['personal.health', ['健康状况', '健康状态']],
     ['personal.maritalStatus', ['婚姻状况', '婚姻状态']],
+    ['personal.children', ['有无子女', '是否有子女', '子女情况']],
+    ['personal.householdType', ['户口性质', '户籍性质']],
     ['personal.constellation', ['星座']],
     ['personal.height', ['身高', '身高cm', '身高（cm）']],
     ['personal.weight', ['体重', '体重kg', '体重（kg）']],
@@ -46,23 +48,27 @@
     ['education.master.rankPercent', ['专业成绩排名前%', '排名前%', '前百分之']],
     ['education.master.rankBand', ['年级排名', '排名区间']],
     ['education.master.researchDirection', ['研究方向']],
-    ['education.master.courses', ['专业课程', '主修课程']],
+    ['education.master.courses', ['专业课程', '主修课程', '所学主要课程']],
     ['education.master.domesticSchool', ['该院校是否为国内院校', '是否为国内院校', '国内院校']],
     ['education.master.onlineStudentStatusVerificationCode', ['在线学籍报告验证码', '学籍报告验证码', '在线验证码', '在线验证报告验证码']],
     ['language.name', ['外语种类', '语种']],
+    ['language.level', ['外语水平', '英语水平']],
+    ['language.cet4', ['四级成绩', 'CET-4分数', 'CET4分数']],
+    ['language.otherScore', ['其他等级分数', '其他外语成绩']],
     ['language.certificate', ['外语证书', '语言证书', '英语证书', '英语证书名称']],
     ['language.cet6', ['六级成绩', '外语考试成绩', 'cet-6', 'cet6']],
-    ['experience.company', ['实习公司', '公司名称', '单位名称', '工作单位']],
+    ['experience.company', ['实习公司', '公司名称', '单位名称', '工作单位', '机构名称']],
     ['experience.industry', ['所属行业', '公司行业', '单位行业', '行业']],
     ['experience.department', ['实习部门', '所属部门', '部门']],
     ['experience.position', ['实习职位', '职位', '职位名称', '岗位名称', '职务']],
-    ['experience.workType', ['工作类型', '工作性质', '经历类型', '实习类型']],
+    ['experience.workType', ['工作类型', '工作性质', '经历类型', '实习类型', '聘用方式']],
     ['experience.startDate', ['实习开始时间', '工作开始时间', '入职时间', '开始任职时间']],
     ['experience.endDate', ['实习结束时间', '工作结束时间', '离职时间', '结束任职时间']],
     ['experience.description200', ['工作内容', '实习内容', '职责描述', '工作描述', '主要职责']],
     ['experience.achievement', ['工作业绩', '实习成果', '主要业绩', '取得业绩']],
     ['experience.isPrimary', ['是否为主要经历', '是否主要经历', '主要经历']],
-    ['skills.short', ['专业技能', '技能特长', '技能描述']],
+    ['skills.short', ['专业技能', '技能特长', '技能描述', '其他技能']],
+    ['skills.computerLevel', ['计算机水平', '计算机等级']],
     ['selfEvaluation.default', ['自我评价', '个人评价', '个人优势', '简述您的能力、特长、项目经历等，请客观评价自己并展现自我优势']],
     ['intention.position', ['期望职位', '应聘岗位']],
     ['intention.city', ['期望工作地', '期望工作地点', '意向城市', '工作地点']]
@@ -72,7 +78,7 @@
     ,['experience.years', ['工作年限', '工作经验年限']]
     ,['intention.minimumMonthlySalary', ['税前月薪最低要求', '最低期望月薪', '最低月薪']]
     ,['intention.careerPlan', ['职业规划', '个人职业规划']]
-    ,['unconfirmed.hobbies', ['个人爱好', '兴趣爱好', '爱好特长']]
+    ,['unconfirmed.hobbies', ['个人爱好', '兴趣爱好', '爱好特长', '特长']]
     ,['thesis.introduction', ['毕业论文简介', '论文简介', '毕业设计简介']]
     ,['personal.nationality', ['nationality', 'citizenship']]
     ,['personal.ethnicity', ['ethnicity', 'ethnic group']]

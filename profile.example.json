@@ -1,12 +1,144 @@
 {
-  "personal":{"name":"示例用户","gender":"男","ethnicity":"汉族","nationality":"中国","height":"175","weight":"65","isOverseasStudent":"否","birthDate":"2002-01-01","politicalStatus":"共青团员","idType":"居民身份证","idNumber":"","phone":"","email":"example@example.com","address":"示例省示例市示例区示例路1号","birthPlace":"示例省示例市","nativePlace":"示例省示例市","household":"示例省示例市","studentOrigin":"示例省示例市","currentCity":"示例市","health":"健康","maritalStatus":"未婚","github":""},
-  "education":{"master":{"school":"示例大学","college":"计算机学院","major":"计算机技术","degree":"硕士研究生","academicDegree":"工程硕士","educationType":"全日制","fullTime":"是","duration":"3年","startDate":"2024-09-01","endDate":"2027-06-30","gpa":"","rank":"","researchDirection":"人工智能","advisor":"","laboratory":"","courses":"机器学习、分布式系统","graduationDesign":""},"bachelor":{"school":"示例大学","college":"计算机学院","major":"计算机科学与技术","degree":"大学本科","academicDegree":"工学学士","educationType":"全日制","fullTime":"是","duration":"4年","startDate":"2020-09-01","endDate":"2024-06-30","gpa":"","rank":"","courses":"数据结构、操作系统、计算机网络","graduationDesign":""}},
-  "language":{"name":"英语","certificate":"CET-6","cet6":"","description":"能够阅读英文技术文档"},
-  "family":{"father":{"relation":"父亲","name":"","birthDate":"","company":"","position":"","phone":""},"mother":{"relation":"母亲","name":"","birthDate":"","company":"","position":"","phone":""}},
-  "experience":{"company":"示例科技有限公司","department":"研发部","position":"研发实习生","workType":"实习","startDate":"2026-01-01","endDate":"2026-06-30","description100":"参与软件系统功能开发与测试。","description200":"参与需求分析、功能开发、测试和问题修复。","achievement":"完成核心模块开发并通过验收。"},
-  "projects":[{"name":"示例项目","role":"开发成员","startDate":"2025-01-01","endDate":"2025-06-30","technologies":"Python、SQL","description":"完成数据处理、模型训练与系统集成。","achievement":"实现预定功能并完成项目验收。"}],
-  "awards":["2025年 校级奖学金"],"publications":[],"attachments":[],
-  "skills":{"short":"熟悉Python、Java和SQL，了解机器学习与Web开发。"},"selfEvaluation":{"personality5":"认真、负责","short":"学习能力强，能够独立分析并解决问题。","default":"具备良好的软件开发基础与团队协作能力，能够快速理解业务并推进功能落地。"},
-  "intention":{"position":"软件开发工程师","city":"示例市"},"unconfirmed":{"expectedSalary":"","hobbies":"跑步、阅读"}
+  "personal": {
+    "name": "示例用户",
+    "gender": "男",
+    "ethnicity": "汉族",
+    "nationality": "中国",
+    "height": "175",
+    "weight": "65",
+    "isOverseasStudent": "否",
+    "birthDate": "2002-01-01",
+    "politicalStatus": "共青团员",
+    "idType": "居民身份证",
+    "idNumber": "",
+    "phone": "",
+    "email": "example@example.com",
+    "address": "示例省示例市示例区示例路1号",
+    "birthPlace": "示例省示例市",
+    "nativePlace": "示例省示例市",
+    "household": "示例省示例市",
+    "studentOrigin": "示例省示例市",
+    "currentCity": "示例市",
+    "health": "健康",
+    "maritalStatus": "未婚",
+    "github": "",
+    "children": "",
+    "householdType": ""
+  },
+  "education": {
+    "master": {
+      "school": "示例大学",
+      "college": "计算机学院",
+      "major": "计算机技术",
+      "degree": "硕士研究生",
+      "academicDegree": "工程硕士",
+      "educationType": "全日制",
+      "fullTime": "是",
+      "duration": "3年",
+      "startDate": "2024-09-01",
+      "endDate": "2027-06-30",
+      "gpa": "",
+      "rank": "",
+      "researchDirection": "人工智能",
+      "advisor": "",
+      "laboratory": "",
+      "courses": "机器学习、分布式系统",
+      "graduationDesign": "",
+      "degreeName": ""
+    },
+    "bachelor": {
+      "school": "示例大学",
+      "college": "计算机学院",
+      "major": "计算机科学与技术",
+      "degree": "大学本科",
+      "academicDegree": "工学学士",
+      "educationType": "全日制",
+      "fullTime": "是",
+      "duration": "4年",
+      "startDate": "2020-09-01",
+      "endDate": "2024-06-30",
+      "gpa": "",
+      "rank": "",
+      "courses": "数据结构、操作系统、计算机网络",
+      "graduationDesign": "",
+      "degreeName": ""
+    }
+  },
+  "language": {
+    "name": "英语",
+    "certificate": "CET-6",
+    "cet6": "",
+    "description": "能够阅读英文技术文档",
+    "level": "",
+    "cet4": "",
+    "otherScore": ""
+  },
+  "family": {
+    "father": {
+      "relation": "父亲",
+      "name": "",
+      "birthDate": "",
+      "company": "",
+      "position": "",
+      "phone": "",
+      "status": "",
+      "worksInSystem": "",
+      "employeeId": ""
+    },
+    "mother": {
+      "relation": "母亲",
+      "name": "",
+      "birthDate": "",
+      "company": "",
+      "position": "",
+      "phone": "",
+      "status": "",
+      "worksInSystem": "",
+      "employeeId": ""
+    }
+  },
+  "experience": {
+    "company": "示例科技有限公司",
+    "department": "研发部",
+    "position": "研发实习生",
+    "workType": "实习",
+    "startDate": "2026-01-01",
+    "endDate": "2026-06-30",
+    "description100": "参与软件系统功能开发与测试。",
+    "description200": "参与需求分析、功能开发、测试和问题修复。",
+    "achievement": "完成核心模块开发并通过验收。"
+  },
+  "projects": [
+    {
+      "name": "示例项目",
+      "role": "开发成员",
+      "startDate": "2025-01-01",
+      "endDate": "2025-06-30",
+      "technologies": "Python、SQL",
+      "description": "完成数据处理、模型训练与系统集成。",
+      "achievement": "实现预定功能并完成项目验收。"
+    }
+  ],
+  "awards": [
+    "2025年 校级奖学金"
+  ],
+  "publications": [],
+  "attachments": [],
+  "skills": {
+    "short": "熟悉Python、Java和SQL，了解机器学习与Web开发。",
+    "computerLevel": ""
+  },
+  "selfEvaluation": {
+    "personality5": "认真、负责",
+    "short": "学习能力强，能够独立分析并解决问题。",
+    "default": "具备良好的软件开发基础与团队协作能力，能够快速理解业务并推进功能落地。"
+  },
+  "intention": {
+    "position": "软件开发工程师",
+    "city": "示例市"
+  },
+  "unconfirmed": {
+    "expectedSalary": "",
+    "hobbies": "跑步、阅读"
+  }
 }
-
