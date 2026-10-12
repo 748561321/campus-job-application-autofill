@@ -9,7 +9,7 @@ node scripts/validate-release.js
 node test-bankcomm-rules.js
 ```
 
-检查内容包括Manifest V3、禁止的全站权限、隐私文件、个人信息特征、JavaScript语法和必需商店材料。
+检查内容包括Manifest V3、禁止的全站权限、隐私文件、个人信息特征、JavaScript语法和必需发布材料。
 
 ## 人工测试
 
@@ -21,10 +21,6 @@ node test-bankcomm-rules.js
 6. 验证诊断文件名带 `redacted`，并人工搜索姓名、手机号、证件号、邮箱和地址。
 7. 在Element Plus、Ant Design及iframe页面上分别测试下拉框。
 8. 确认扩展不会点击提交、上传附件、处理验证码或代答测评。
-
-## 商店审核说明
-
-审核人员可打开仓库中的 `test-form.html`，点击扩展图标，依次执行“扫描当前页面”和“填充高置信字段”。示例资料全部为虚构内容。
 
 ## 结构诊断检查
 

@@ -1,6 +1,6 @@
 const fs=require('fs'),path=require('path'),cp=require('child_process');
 const root=path.resolve(__dirname,'..');
-const required=['manifest.json','popup.html','popup.js','options.html','options.js','content.js','field-rules.js','page-bridge.js','profile.example.json','PRIVACY.md','PRIVACY.en.md','README.md','README.en.md','TESTING.md','STORE_LISTING.md','STORE_LISTING.en.md','_locales/zh_CN/messages.json','_locales/en/messages.json','DISCLAIMER.md','icons/icon-128.png','store-assets/screenshot-1.png'];
+const required=['manifest.json','popup.html','popup.js','options.html','options.js','content.js','field-rules.js','page-bridge.js','profile.example.json','PRIVACY.md','PRIVACY.en.md','README.md','README.en.md','TESTING.md','_locales/zh_CN/messages.json','_locales/en/messages.json','DISCLAIMER.md','icons/icon-128.png','store-assets/screenshot-1.png'];
 const failures=[];
 for(const file of required)if(!fs.existsSync(path.join(root,file)))failures.push(`缺少文件: ${file}`);
 const manifest=JSON.parse(fs.readFileSync(path.join(root,'manifest.json'),'utf8').replace(/^\uFEFF/,''));
