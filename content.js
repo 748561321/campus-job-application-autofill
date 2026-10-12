@@ -1,5 +1,5 @@
 (function () {
-  const CONTENT_VERSION = '1.2.2';
+  const CONTENT_VERSION = '1.2.3';
   if (window.__JOB_AUTOFILL_MESSAGE_LISTENER__) {
     try { chrome.runtime.onMessage.removeListener(window.__JOB_AUTOFILL_MESSAGE_LISTENER__); } catch (_) {}
   }
@@ -704,16 +704,26 @@
     return Boolean(el.value);
   }
 
-  async function fillElementCascader(el, value) {
+  function educationMajorPath(profile, path, value) {
+    const matched = String(path || '').match(/^education\.(master|bachelor)\.major$/);
+    if (!matched) return [];
+    const education = profile?.education?.[matched[1]] || {};
+    return [education.disciplineCategory, education.majorCategory, education.major || value]
+      .map(item => String(item || '').trim()).filter(Boolean);
+  }
+
+  async function fillElementCascader(el, value, partsOverride = []) {
     pressEscape();
     await wait(40);
-    realClick(el.closest('.el-cascader, .ant-cascader-picker') || el);
+    const cascaderTrigger = el.closest('.el-cascader, .ant-cascader-picker') ||
+      el.closest('.el-select')?.querySelector('.el-select__wrapper') || el;
+    realClick(cascaderTrigger);
     await wait(320);
     if (location.host === 'xiaoyuan.zhaopin.com' &&
         Array.from(document.querySelectorAll('input')).some(input => visible(input) && /搜索城市名|搜索城市|搜索区县/.test(input.placeholder || ''))) {
       return fillZhaopinRegion(el, value);
     }
-    const parts = locationParts(value);
+    const parts = partsOverride.length ? partsOverride : locationParts(value);
     if (!parts.length) return false;
     for (let partIndex = 0; partIndex < parts.length; partIndex++) {
       const part = parts[partIndex];
@@ -730,17 +740,17 @@
         '.ant-cascader-menu-item:not(.ant-cascader-menu-item-disabled)'
       ].join(','));
       let option = bestTextOption(nodes, part);
-      if (!option && location.host === 'xiaoyuan.zhaopin.com') {
+      if (!option && (location.host === 'xiaoyuan.zhaopin.com' || location.host === 'zhaopin.chng.com.cn')) {
         option = genericVisibleTextOptions(part)[0];
       }
       if (!option) {
         // Many recruitment sites expose only province/city. District is a
         // best-effort third level and must not invalidate a valid city choice.
-        if (partIndex >= 2) {
+        if (!partsOverride.length && partIndex >= 2) {
           pressEscape();
           return Boolean(existingFieldValue(el));
         }
-        realClick(el.closest('.el-cascader, .ant-cascader-picker') || el);
+        realClick(cascaderTrigger);
         return false;
       }
       realClick(option.closest('.el-cascader-node') || option);
@@ -765,7 +775,7 @@
     return Boolean(el.value);
   }
 
-  async function fillReadonlyControl(el, value, path) {
+  async function fillReadonlyControl(el, value, path, profile) {
     const isDatePath = /(?:birthDate|startDate|endDate|partyJoinDate)$/i.test(path || '');
     const isLocationPath = /(?:currentCity|household|studentOrigin|nativePlace)$/i.test(path || '');
     if (el.closest('.el-date-editor, .ant-picker') || isDatePath) {
@@ -781,6 +791,12 @@
         return false;
       }
       return fillElementDate(el, value);
+    }
+    const majorPath = educationMajorPath(profile, path, value);
+    if (majorPath.length > 1) {
+      const cascaded = await fillElementCascader(el, value, majorPath);
+      if (cascaded) return true;
+      return fillElementSelect(el, value);
     }
     if (el.closest('.el-cascader, .ant-cascader') || isLocationPath) {
       return fillElementCascader(el, value);
@@ -1182,13 +1198,13 @@
         ok = await fillElementSelect(el, value);
       }
       else if (el.matches('.ant-cascader-picker') || el.closest('.ant-cascader-picker')) {
-        ok = await fillElementCascader(el, value);
+        ok = await fillElementCascader(el, value, educationMajorPath(profile, match.path, value));
       }
       else if (el.matches('.ant-select-selection') || el.closest('.ant-select')) {
         ok = await fillElementSelect(el, value);
       }
       else if (el.readOnly || el.getAttribute('aria-readonly') === 'true') {
-        ok = await fillReadonlyControl(el, value, match.path);
+        ok = await fillReadonlyControl(el, value, match.path, profile);
       }
       else if (el.getAttribute('role') === 'combobox' && el.tagName !== 'INPUT') {
         ok = false;
