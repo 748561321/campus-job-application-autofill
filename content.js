@@ -1,5 +1,5 @@
 (function () {
-  const CONTENT_VERSION = '1.2.3';
+  const CONTENT_VERSION = '1.2.4';
   if (window.__JOB_AUTOFILL_MESSAGE_LISTENER__) {
     try { chrome.runtime.onMessage.removeListener(window.__JOB_AUTOFILL_MESSAGE_LISTENER__); } catch (_) {}
   }
@@ -335,7 +335,38 @@
     const hit = fields.find(([pattern]) => pattern.test(local));
     return hit ? { path: `projects.${index}.${hit[1]}`, confidence: 1, alias: hit[0].source } : { blocked: true };
   }
+  function jiandaoyunColumn(el) {
+    if (!location.hostname.endsWith('.jiandaoyun.com')) return null;
+    const cell = el.closest('.subform-cell');
+    const row = cell?.closest('.fx-subform-row');
+    const form = cell?.closest('.fx-subform');
+    if (!cell || !row || !form) return null;
+    const cells = Array.from(row.querySelectorAll('.subform-cell'))
+      .filter(node => node.closest('.fx-subform-row') === row);
+    const headers = Array.from(form.querySelectorAll('.subform-head .subform-cell'))
+      .filter(node => node.closest('.fx-subform') === form);
+    if (!cells.length || cells.length !== headers.length) return { blocked: true };
+    const index = cells.indexOf(cell);
+    const header = headers[index]?.querySelector('.subform-title');
+    const label = (header?.innerText || header?.textContent || '').trim();
+    if (!label) return { blocked: true };
+    const rows = Array.from(form.querySelectorAll('.fx-subform-row'))
+      .filter(node => node.closest('.fx-subform') === form);
+    return { label, rowIndex: rows.indexOf(row),
+      columns: headers.map(node => (node.innerText || node.textContent || '').trim()) };
+  }
+
   function matchElement(el, fullLabel, educationLevel = 'auto') {
+    if (location.hostname === 'job.byd.com') {
+      const row = el.closest('.el-form-item');
+      const label = row?.querySelector('.el-form-item__label')?.textContent || '';
+      const block = el.closest('.list-form-container');
+      const section = (block?.innerText || block?.textContent || '').slice(0, 80);
+      const degreeInput = block?.querySelector('.el-form-item input');
+      const degree = degreeInput?.value || '';
+      // Unknown BYD fields stop here; never borrow a neighbouring field's label.
+      return window.JobAutofillBydMatch?.(label, section, degree, el.placeholder || '') || null;
+    }
     const adaptVariant = match => {
       if (!match) return match;
       const maxLength = Number(el.maxLength || el.getAttribute('maxlength') || 0);
@@ -347,6 +378,23 @@
       }
       return match;
     };
+    const column = jiandaoyunColumn(el);
+    if (column) {
+      if (column.blocked) return null;
+      if (column.columns.some(text => R.normalize(text) === '奖项名称')) {
+        const suffix = { '奖项名称': 'name', '获奖时间': 'date',
+          '奖项级别': 'level', '获奖类型': 'type' }[R.normalize(column.label)];
+        if (!suffix || column.rowIndex < 0) return null;
+        return { path: `awardDetails.${column.rowIndex}.${suffix}`,
+          confidence: 0.99, alias: column.label };
+      }
+      // Only the employment table may consume employment profile values.
+      if (!column.columns.some(text => R.normalize(text) === '公司')) return null;
+      const key = R.normalize(column.label);
+      const paths = { '开始时间': 'experience.startDate', '结束时间': 'experience.endDate',
+        '公司': 'experience.company', '职位': 'experience.position', '工作描述': 'experience.description200' };
+      return paths[key] ? adaptVariant({ path: paths[key], confidence: 0.99, alias: column.label }) : null;
+    }
     const type = (el.type || '').toLowerCase();
     const fieldText = `${ownText(el)} | ${fullLabel || ''}`;
     const cmb = cmbStructuredMatch(el, fullLabel);
@@ -380,7 +428,8 @@
     }
     // The first parts are the current control and its nearest label. Later parts
     // may contain labels belonging to every field in the same dialog.
-    const localLabel = String(fullLabel || '').split('|').slice(0, 2).join('|');
+    const localLabel = String(fullLabel || '').split('|')
+      .slice(0, location.hostname.endsWith('.jiandaoyun.com') ? 1 : 2).join('|');
     return adaptVariant(applyEducationLevel(R.matchField(localLabel), educationLevel, localLabel));
   }
 
@@ -808,6 +857,20 @@
   }
 
   function nearbyText(el) {
+    const column = jiandaoyunColumn(el);
+    if (column) return column.label || '';
+    // Stop before a shared row can contribute another field's caption.
+    if (location.hostname.endsWith('.jiandaoyun.com')) {
+      let field = el.parentElement;
+      for (let depth = 0; field && depth < 10 && field !== document.body; depth++, field = field.parentElement) {
+        const controls = Array.from(field.querySelectorAll('input, textarea, select'))
+          .filter(node => !['hidden', 'button', 'submit'].includes(node.type) && visible(node));
+        if (controls.length > 1) break;
+        const caption = field.querySelector('label, [class*="label"], [class*="title"]');
+        const text = (caption?.innerText || caption?.textContent || '').trim();
+        if (caption && !caption.contains(el) && !caption.querySelector('input, textarea, select') && text && text.length <= 80) return text;
+      }
+    }
     const chunks = [
       el.getAttribute('aria-label'), el.getAttribute('data-placeholder'),
       el.getAttribute('data-label'), el.getAttribute('title'),
@@ -1002,7 +1065,7 @@
       const selectedNodes = Array.from(root.querySelectorAll?.(selectedSelector) || []).slice(0, 20).map(diagnosticNode);
       const ancestors = [];
       let cursor = el;
-      for (let depth = 0; cursor && depth < 5 && cursor !== document.body; depth++, cursor = cursor.parentElement) {
+      for (let depth = 0; cursor && depth < 10 && cursor !== document.body; depth++, cursor = cursor.parentElement) {
         ancestors.push(diagnosticNode(cursor));
       }
       const currentValue = existingFieldValue(el, expectedValue);

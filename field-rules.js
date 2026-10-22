@@ -17,7 +17,7 @@
     ['personal.partyJoinDate', ['参加党派时间']],
     ['personal.idType', ['证件类型']],
     ['personal.idNumber', ['身份证号', '身份证号码', '证件号码', '证件号']],
-    ['personal.phone', ['手机号', '手机号码', '联系电话', '移动电话', 'mobile', 'phone']],
+    ['personal.phone', ['手机', '手机号', '手机号码', '联系电话', '移动电话', 'mobile', 'phone']],
     ['personal.email', ['邮箱', '电子邮箱', '邮箱地址', '常用邮箱', '用于接收面试及录用通知', 'email', 'e-mail']],
     ['personal.address', ['通信地址', '通讯地址', '联系地址', '现住址', '详细地址']],
     ['personal.birthPlace', ['出生地', '出生所在地']],
@@ -167,6 +167,40 @@
     }
     return { category: 'unknown', reason: '尚未识别字段含义' };
   }
+
+// BYD exposes adjacent labels in shared containers: match only the owned label.
+  function matchBydField(label, section = '', degree = '', placeholder = '') {
+    const key = String(label || '').replace(/[\\s＊*：:]/g, '');
+    const hit = path => ({ path, confidence: 1, alias: key });
+    const personal = {'姓名':'name','性别':'gender','国籍':'nationality','籍贯':'nativePlace',
+      '民族':'ethnicity','政治面貌':'politicalStatus','证件类别':'idType','证件号码':'idNumber',
+      '出生日期':'birthDate','电话所在区域':'phoneCountryCode','移动电话':'phone',
+      '电子邮箱':'email','微信号':'wechat','家庭住址':'address'};
+    if (personal[key]) return hit('personal.' + personal[key]);
+    if (/意向职位类别|宣讲城市|内推码|分校区|校区所在地址|特殊情况说明|挂科门数|是否受过处分|是否在比亚迪工作过|获知渠道|公司内是否有亲属|期望年薪/.test(key)) return null;
+    if (/教育经历/.test(section)) {
+      const level = /硕士|研究生/.test(degree) ? 'master' : /本科|学士/.test(degree) ? 'bachelor' : '';
+      if (!level) return null;
+      const fields = {'学历':'degree','是否全日制':'fullTime','毕业学校':'school','是否境外教育':'overseasEducation',
+        '是否统招':'unifiedAdmission','专业':'major','专业类别':'majorCategory','研究方向':'researchDirection','标准学制':'duration'};
+      const suffix = key === '起止时间' ? (/开始/.test(placeholder) ? 'startDate' : /结束/.test(placeholder) ? 'endDate' : '') : fields[key];
+      return suffix ? hit('education.' + level + '.' + suffix) : null;
+    }
+    if (/工作.?实习经历/.test(section)) {
+      const fields = {'公司/单位名称':'company','工作地点':'city','部门':'department','岗位（职务）名称':'position','工作描述':'description200'};
+      const suffix = key === '起止时间' ? (/开始/.test(placeholder) ? 'startDate' : /结束/.test(placeholder) ? 'endDate' : '') : fields[key];
+      return suffix ? hit('experience.' + suffix) : null;
+    }
+    if (/语言技能/.test(section)) {
+      return ({'语言等级':'language.certificate','成绩':'language.cet6','获得时间':'language.certificateDate'})[key]
+        ? hit(({'语言等级':'language.certificate','成绩':'language.cet6','获得时间':'language.certificateDate'})[key]) : null;
+    }
+    const common = {'学习成绩（绩点）':'education.master.gpaScore','成绩排名':'education.master.rank',
+      '特长爱好':'unconfirmed.hobbies'};
+    return common[key] ? hit(common[key]) : null;
+  }
+
+  window.JobAutofillBydMatch = matchBydField;
 
   function matchField(text) {
     const parts = String(text || '').split('|').map(normalize).filter(Boolean);
