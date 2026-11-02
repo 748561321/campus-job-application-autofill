@@ -1,5 +1,5 @@
 (function () {
-  const CONTENT_VERSION = '1.2.4';
+  const CONTENT_VERSION = '1.2.5';
   if (window.__JOB_AUTOFILL_MESSAGE_LISTENER__) {
     try { chrome.runtime.onMessage.removeListener(window.__JOB_AUTOFILL_MESSAGE_LISTENER__); } catch (_) {}
   }
@@ -356,7 +356,45 @@
       columns: headers.map(node => (node.innerText || node.textContent || '').trim()) };
   }
 
+
+  // Resolve repeatable ATS rows by their existing title, never a neighbouring row.
+  function feishuStructuredMatch(el) {
+    const item = el.closest('.atsx-form-item');
+    const label = (item?.querySelector('.atsx-form-item-label')?.textContent || '').trim();
+    if (el.matches('.atsx-select-search__field')) return null;
+    const row = el.closest('.resumeEditForm-item');
+    const id = el.id || el.name || '';
+    const field = id.match(/^(project|award|internship|education)\[(\d+)\]\.(\w+)$/);
+    const kind = field?.[1] || (row?.classList.contains('resumeEditForm-award') ? 'award' : '');
+    const suffix = field?.[3] || (/获奖时间/.test(label) ? 'date' : '');
+    if (kind === 'project' || kind === 'award') {
+      const title = row?.querySelector(kind === 'project' ? '[id$=".name"]' : '[id$=".title"]')?.value?.trim();
+      const key = kind === 'project' ? {name:'name',role:'role',link:'link',desc:'description'}[suffix]
+        : {title:'name',date:'date'}[suffix];
+      if (!title || !key) return null;
+      return {path:`feishu.${kind}.${encodeURIComponent(title)}.${key}`,confidence:1,alias:label || suffix};
+    }
+    if (kind === 'internship') {
+      if (field[2] !== '0') return null;
+      const key = {company:'company',title:'position',desc:'description200'}[suffix];
+      return key ? {path:`experience.${key}`,confidence:1,alias:label}:null;
+    }
+    // Education and other custom fields remain manual until their row context is known.
+    if (field) return null;
+    return R.matchField(label || id);
+  }
+
+  function feishuProfileValue(profile, path) {
+    const parts=path.split('.');
+    const rows=parts[1]==='project' ? profile.projects : profile.awardDetails;
+    const normalize=s=>String(s||'').replace(/[\s·•：:（）()]/g,'').toLowerCase();
+    const name=normalize(decodeURIComponent(parts[2]));
+    const matches=(rows||[]).filter(row=>normalize(row.name)===name);
+    return matches.length===1 ? matches[0][parts[3]] : undefined;
+  }
+
   function matchElement(el, fullLabel, educationLevel = 'auto') {
+    if (location.hostname.endsWith('.jobs.feishu.cn')) return feishuStructuredMatch(el);
     if (location.hostname === 'job.byd.com') {
       const row = el.closest('.el-form-item');
       const label = row?.querySelector('.el-form-item__label')?.textContent || '';
@@ -487,6 +525,7 @@
     return hit ? { path: `family.${member}.${hit[1]}`, confidence: 1, alias: hit[0].source } : { blocked: true };
   }
   function profileValue(profile, path) {
+    if (path.startsWith('feishu.')) return feishuProfileValue(profile, path);
     const value = R.getByPath(profile, path);
     if (value !== undefined && value !== null && value !== '') return value;
     // Backward-compatible migration for profiles saved before v0.10.0.
@@ -958,7 +997,8 @@
     return elements.map((el, index) => {
       const label = nearbyText(el);
       const match = matchElement(el, label, educationLevel);
-      const value = match ? profileValue(profile, match.path) : undefined;
+      const rawValue = match ? profileValue(profile, match.path) : undefined;
+      const value = location.hostname.endsWith('.jobs.feishu.cn') && el.placeholder === 'YYYY' && typeof rawValue === 'string' ? rawValue.slice(0,4) : rawValue;
       const currentValue = existingFieldValue(el, value);
       const classification = currentValue
         ? { category: 'existing', reason: match ? '页面中已有内容，默认不会覆盖' : '页面中已有内容，无需自动填写' }
@@ -1055,7 +1095,8 @@
     return candidates().slice(0, 250).map((el, index) => {
       const label = nearbyText(el);
       const match = matchElement(el, label, educationLevel);
-      const expectedValue = match ? profileValue(profile, match.path) : undefined;
+      const rawExpectedValue = match ? profileValue(profile, match.path) : undefined;
+      const expectedValue = location.hostname.endsWith('.jobs.feishu.cn') && el.placeholder === 'YYYY' && typeof rawExpectedValue === 'string' ? rawExpectedValue.slice(0,4) : rawExpectedValue;
       const root = diagnosticControlRoot(el);
       const selectedSelector = [
         'input:checked', 'option:checked', '[aria-checked="true"]', '[aria-selected="true"]',
@@ -1246,7 +1287,8 @@
     for (const el of elements) {
       const label = nearbyText(el);
       const match = matchElement(el, label, educationLevel);
-      const value = match ? profileValue(profile, match.path) : undefined;
+      const rawValue = match ? profileValue(profile, match.path) : undefined;
+      const value = location.hostname.endsWith('.jobs.feishu.cn') && el.placeholder === 'YYYY' && typeof rawValue === 'string' ? rawValue.slice(0,4) : rawValue;
       if (!match || match.confidence < threshold || value == null || value === '') continue;
       const currentValue = existingFieldValue(el, value);
       if (!overwrite && currentValue) {
