@@ -1,4 +1,4 @@
 {
-  "extensionName": {"message": "Campus Application Autofill"},
-  "extensionDescription": {"message": "Recognizes Chinese and English application fields only after a user action, fills from a local profile, and never submits forms automatically."}
+  "extensionName": {"message": "Job Application Autofill"},
+  "extensionDescription": {"message": "Fills online job application and resume forms in Chinese and English from a local profile. You control submission."}
 }

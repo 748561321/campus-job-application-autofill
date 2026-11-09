@@ -1,4 +1,4 @@
-param([string]$Output = "dist/campus-application-autofill.zip")
+param([string]$Output = "dist/job-application-autofill.zip")
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 node (Join-Path $PSScriptRoot "validate-release.js")

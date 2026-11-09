@@ -1,4 +1,4 @@
 {
-  "extensionName": {"message": "校招网申助手"},
-  "extensionDescription": {"message": "仅在用户主动操作后识别中英文网申字段，使用保存在本机的资料预览和填充表单，不自动提交。"}
+  "extensionName": {"message": "网申简历助手"},
+  "extensionDescription": {"message": "支持中英文网申和简历投递表单。按需扫描页面，预览并使用本地资料自动填写，由用户提交。"}
 }

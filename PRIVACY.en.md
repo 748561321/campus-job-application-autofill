@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Campus Application Autofill is designed to work locally.
+Job Application Autofill is designed to work locally.
 
 - Profile data is stored only in the browser's local extension storage.
 - The extension does not upload resumes, profile data, page content, or browsing history.

@@ -1,10 +1,10 @@
-# Campus Job Application Autofill
+# Job Application Autofill
 
-A privacy-first Chrome/Edge extension for campus recruitment and job application autofill. It recognizes Chinese and English resume forms, previews field matches, preserves existing values, and fills from a local profile only after user confirmation.
+A privacy-first Chrome/Edge extension for filling out online job applications. It recognizes Chinese and English resume forms, previews field matches, preserves existing values, and fills from a local profile only after user confirmation.
 
 ## Keywords
 
-Chrome extension, Edge extension, campus recruitment, job application autofill, resume autofill, form filler, graduate recruitment, privacy-first.
+Chrome extension, Edge extension, online job applications, job application autofill, resume autofill, form filler, privacy-first.
 
 ## Highlights
 
